@@ -26,9 +26,6 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.nio.charset.Charset;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 class WebServer {
   public static void main(String args[]) {
     WebServer server = new WebServer(9000);
@@ -204,18 +201,6 @@ class WebServer {
           // extract path parameters
           query_pairs = splitQuery(request.replace("multiply?", ""));
 
-          if (!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")) {
-            builder.append("HTTP/1.1 400 Bad Request\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
-            builder.append("Please provide TWO numbers to multiply. Thanks!");
-
-          }
-          else
-          {
-
-          try {
-
           // extract required fields from parameters
           Integer num1 = Integer.parseInt(query_pairs.get("num1"));
           Integer num2 = Integer.parseInt(query_pairs.get("num2"));
@@ -231,15 +216,7 @@ class WebServer {
 
           // TODO: Include error handling here with a correct error code and
           // a response that makes sense
-          
-          } catch (NumberFormatException e) {
-            // Handle parsing errors
-            builder.append("HTTP/1.1 400 Bad Request\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
-            builder.append("Both numbers you submit must be positive integer values.");
-        }
-    }
+
     
     } else if (request.contains("guessColorAndNumber?")) {
     Map<String, String> query_pairs = splitQuery(request.replace("guessColorAndNumber?", ""));
@@ -295,7 +272,7 @@ class WebServer {
                 
             }
 
-        } catch (NumberFormatException | IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
           builder.append("HTTP/1.1 400 Bad Request\n");
           builder.append("Content-Type: text/html; charset=utf-8\n");
           builder.append("\n");
@@ -334,7 +311,7 @@ class WebServer {
             builder.append(String.format("%.2f kilometers is roughly %.2f miles",
             amountKilometers, amountMiles));
         
-          } catch (NumberFormatException | IllegalArgumentException e) {
+          } catch (NumberFormatException e) {
             builder.append("HTTP/1.1 400 Bad Request\n");
             builder.append("Content-Type: text/html; charset=utf-8\n");
             builder.append("\n");
@@ -359,19 +336,6 @@ class WebServer {
           String json = fetchURL("https://api.github.com/" + query_pairs.get("query"));
           System.out.println(json);
 
-          try {
-          JSONArray repoName = new JSONArray(jsonResponse);
-          StringBuilder stringBuilder = new StringBuilder();
-
-          for (int i = 0; i < repoName.length(); i++) {
-
-            JSONObject expectedRepo = repoName.getJSONObject(i);
-            stringBuilder.append("Name of Repository: ").append(expectedRepo.getString("full_name"))
-              .append(", ID: ").append(expectedRepo.getInt("id"))
-              .append(", Github Login: ").append(expectedRepo.getJSONObject("Github").getString("login"))
-              .append("\n");
-        }
-
           builder.append("HTTP/1.1 200 OK\n");
           builder.append("Content-Type: text/html; charset=utf-8\n");
           builder.append("\n");
@@ -379,14 +343,6 @@ class WebServer {
           // TODO: Parse the JSON returned by your fetch and create an appropriate
           // response based on what the assignment document asks for
         
-        } catch (Exception e) {
-
-          builder.append("HTTP/1.1 500 Internal Server Error\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("Please try again, error with obtaining Github.");
-          
-    }
         } else {
           // if the request is not recognized at all
 
