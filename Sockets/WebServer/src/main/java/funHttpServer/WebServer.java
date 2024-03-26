@@ -201,6 +201,18 @@ class WebServer {
           // extract path parameters
           query_pairs = splitQuery(request.replace("multiply?", ""));
 
+          if (!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Please provide TWO numbers to multiply. Thanks!");
+
+          }
+          else
+          {
+
+          try {
+
           // extract required fields from parameters
           Integer num1 = Integer.parseInt(query_pairs.get("num1"));
           Integer num2 = Integer.parseInt(query_pairs.get("num2"));
@@ -216,6 +228,119 @@ class WebServer {
 
           // TODO: Include error handling here with a correct error code and
           // a response that makes sense
+          
+          } catch (NumberFormatException e) {
+            // Handle parsing errors
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Both numbers you submit must be positive integer values.");
+        }
+    }
+    
+    } else if (request.contains("guessColorAndNumber?")) {
+    Map<String, String> query_pairs = splitQuery(request.replace("guessColorAndNumber?", ""));
+
+    String guessedColor = query_pairs.get("color");
+    String guessedNumberString = query_pairs.get("number");
+
+    // Correct answers will be here:
+    final String correctColor = "blue"; 
+    final int correctNumber = 3; 
+
+    if (guessedColor == null || guessedNumberString == null) {
+        builder.append("HTTP/1.1 400 Bad Request\n");
+        builder.append("Content-Type: text/html; charset=utf-8\n");
+        builder.append("\n");
+        builder.append("Please guess both a color ('red', 'green', or 'blue') and a number ('1', '2', or '3').");
+
+    } 
+    else 
+    {
+
+        try {
+            int guessedNumber = Integer.parseInt(guessedNumberString);
+            if (guessedNumber < 1 || guessedNumber > 3) {
+
+              throw new IllegalArgumentException("Number out of range, please submit a number between 1 and 3.");
+
+            }
+
+            if (!guessedColor.equalsIgnoreCase("red") 
+            && !guessedColor.equalsIgnoreCase("green") 
+            && !guessedColor.equalsIgnoreCase("blue")) {
+
+              throw new IllegalArgumentException("Please submit a color of either red, blue or green.");
+
+            }
+
+
+            if (guessedColor.equalsIgnoreCase(correctColor) && guessedNumber == correctNumber) {
+                builder.append("HTTP/1.1 200 OK\n");
+                builder.append("Content-Type: text/plain; charset=utf-8\n");
+                builder.append("\n");
+                builder.append("Congratulations, you won! The correct guesses were the color: " + correctColor + " and the number: " + correctNumber + ".");
+            
+            } 
+            else 
+            {
+
+                builder.append("HTTP/1.1 200 OK\n");
+                builder.append("Content-Type: text/plain; charset=utf-8\n");
+                builder.append("\n");
+                builder.append("Sorry, you guessed wrong. Please try again!");
+                
+            }
+
+        } catch (NumberFormatException | IllegalArgumentException e) {
+          builder.append("HTTP/1.1 400 Bad Request\n");
+          builder.append("Content-Type: text/html; charset=utf-8\n");
+          builder.append("\n");
+          builder.append("Invalid guess. Please guess a color ('red', 'green', or 'blue') and a number ('1', '2', or '3').");
+
+        }
+    }
+
+    } else if (request.contains("convertDistance?")) {
+    Map<String, String> query_pairs = splitQuery(request.replace("convertDistance?", ""));
+
+    String kilometersHoldString = query_pairs.get("kilometers:");
+
+    if (kilometersHoldString == null) {
+        builder.append("HTTP/1.1 400 Bad Request\n");
+        builder.append("Content-Type: text/html; charset=utf-8\n");
+        builder.append("\n");
+        builder.append("The 'kilometers' amount must be provided.");
+
+    } 
+    else 
+    {
+
+        try {
+            double amountKilometers = Double.parseDouble(kilometersHoldString);
+            if (amountKilometers < 0) {
+                throw new IllegalArgumentException();
+
+            }
+
+            double amountMiles = amountKilometers * 0.621371;
+
+            builder.append("HTTP/1.1 200 OK\n");
+            builder.append("Content-Type: text/plain; charset=utf-8\n");
+            builder.append("\n");
+            builder.append(String.format("%.2f kilometers is roughly %.2f miles",
+            amountKilometers, amountMiles));
+        
+          } catch (NumberFormatException | IllegalArgumentException e) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Please submit a positive integer for Kilometers, thanks!");
+
+        }
+    }
+
+
 
         } else if (request.contains("github?")) {
           // pulls the query from the request and runs it with GitHub's REST API
@@ -231,13 +356,34 @@ class WebServer {
           String json = fetchURL("https://api.github.com/" + query_pairs.get("query"));
           System.out.println(json);
 
+          try {
+          JSONArray repoName = new JSONArray(jsonResponse);
+          StringBuilder stringBuilder = new StringBuilder();
+
+          for (int i = 0; i < repoName.length(); i++) {
+
+            JSONObject expectedRepo = repoName.getJSONObject(i);
+            stringBuilder.append("Name of Repository: ").append(expectedRepo.getString("full_name"))
+              .append(", ID: ").append(expectedRepo.getInt("id"))
+              .append(", Github Login: ").append(expectedRepo.getJSONObject("Github").getString("login"))
+              .append("\n");
+        }
+
           builder.append("HTTP/1.1 200 OK\n");
           builder.append("Content-Type: text/html; charset=utf-8\n");
           builder.append("\n");
           builder.append("Check the todos mentioned in the Java source file");
           // TODO: Parse the JSON returned by your fetch and create an appropriate
           // response based on what the assignment document asks for
+        
+        } catch (Exception e) {
 
+          builder.append("HTTP/1.1 500 Internal Server Error\n");
+          builder.append("Content-Type: text/html; charset=utf-8\n");
+          builder.append("\n");
+          builder.append("Please try again, error with obtaining Github.");
+          
+    }
         } else {
           // if the request is not recognized at all
 
